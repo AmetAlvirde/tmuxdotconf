@@ -101,9 +101,8 @@ boundary.
 
 ## Open questions
 
-- RESOLVE THROUGH IMPLEMENTATION: Should the verification harness be a
-  root-level script, a `scripts/check` command, or another repository-local
-  command surface?
+- RESOLVED IN ISSUE #1: The verification harness command surface is
+  `scripts/check` (repository-local, run from workspace root).
 - RESOLVE THROUGH IMPLEMENTATION: Should configuration domains remain inline in
   `tmux.conf` with clearer sectioning, or should selected domains become sourced
   files?
