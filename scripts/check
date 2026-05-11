@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+set -u
+
+run_check() {
+  local label="$1"
+  shift
+
+  if "$@"; then
+    printf 'PASS %s\n' "$label"
+  else
+    local status=$?
+    printf 'FAIL %s\n' "$label" >&2
+    return "$status"
+  fi
+}
+
+require_command() {
+  local cmd="$1"
+
+  if command -v "$cmd" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  printf 'Missing dependency: %s\n' "$cmd" >&2
+  return 1
+}
+
+require_file() {
+  local path="$1"
+
+  if [ -f "$path" ]; then
+    return 0
+  fi
+
+  printf 'Missing file: %s\n' "$path" >&2
+  return 1
+}
+
+require_command tmux || exit 1
+require_command bash || exit 1
+
+require_file tmux.conf || exit 1
+require_file solarized-dark.conf || exit 1
+require_file solarized-light.conf || exit 1
+require_file theme-switcher.sh || exit 1
+
+run_check "tmux parse tmux.conf" tmux source-file -n tmux.conf || exit $?
+run_check "tmux parse solarized-dark.conf" tmux source-file -n solarized-dark.conf || exit $?
+run_check "tmux parse solarized-light.conf" tmux source-file -n solarized-light.conf || exit $?
+run_check "shell parse theme-switcher.sh" bash -n theme-switcher.sh || exit $?
