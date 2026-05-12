@@ -26,5 +26,5 @@ if [ "${TMUX_THEME_FORCE:-0}" != "1" ] && [ "$selected_theme" = "$active_theme" 
   exit 0
 fi
 
-tmux source-file "$selected_theme_file"
+tmux source-file "$selected_theme_file" || exit $?
 tmux set-option -gq @active_theme_selection "$selected_theme"

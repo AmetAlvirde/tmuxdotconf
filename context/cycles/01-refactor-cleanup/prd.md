@@ -84,7 +84,7 @@ boundary.
 - Dark and light theme files no longer duplicate the shared theme layout format
   strings.
 - Theme selection can be exercised for dark, light, unchanged, manual theme
-  refresh, and detection-failure paths.
+  refresh, detection-failure, and failed-apply paths.
 - The tmux entrypoint remains short enough to scan and names the configuration
   domains it delegates or contains.
 - The refactor preserves current tmux parse success under `tmux source-file -n`.
