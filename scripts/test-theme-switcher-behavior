@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+
+set -eu
+
+ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
+SCRIPT_PATH="$ROOT_DIR/theme-switcher.sh"
+
+fail() {
+  printf 'FAIL %s\n' "$1" >&2
+  exit 1
+}
+
+assert_contains() {
+  local file="$1"
+  local expected="$2"
+
+  if ! /usr/bin/grep -F "$expected" "$file" >/dev/null 2>&1; then
+    printf 'Expected to find: %s\n' "$expected" >&2
+    printf 'In file: %s\n' "$file" >&2
+    fail "$3"
+  fi
+}
+
+assert_not_contains() {
+  local file="$1"
+  local expected="$2"
+
+  if /usr/bin/grep -F "$expected" "$file" >/dev/null 2>&1; then
+    printf 'Did not expect to find: %s\n' "$expected" >&2
+    printf 'In file: %s\n' "$file" >&2
+    fail "$3"
+  fi
+}
+
+assert_match_count() {
+  local file="$1"
+  local pattern="$2"
+  local expected_count="$3"
+  local actual_count
+
+  actual_count=$(/usr/bin/grep -c -F "$pattern" "$file" || true)
+  if [ "$actual_count" != "$expected_count" ]; then
+    printf 'Expected %s matches for: %s\n' "$expected_count" "$pattern" >&2
+    printf 'Actual matches: %s\n' "$actual_count" >&2
+    printf 'In file: %s\n' "$file" >&2
+    fail "$4"
+  fi
+}
+
+run_dark_selection_updates_active_state() {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  local stub_dir="$tmpdir/stubs"
+  local log_file="$tmpdir/tmux.log"
+  mkdir -p "$stub_dir"
+
+  cat >"$stub_dir/osascript" <<'EOF'
+#!/usr/bin/env bash
+printf 'true\n'
+EOF
+
+  cat >"$stub_dir/tmux" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$TMUX_STUB_LOG"
+if [ "$1" = "show-option" ] && [ "$2" = "-gqv" ] && [ "$3" = "@active_theme_selection" ]; then
+  printf 'light\n'
+fi
+EOF
+
+  chmod +x "$stub_dir/osascript" "$stub_dir/tmux"
+
+  PATH="$stub_dir:$PATH" TMUX_STUB_LOG="$log_file" HOME="$tmpdir" bash "$SCRIPT_PATH"
+
+  assert_contains "$log_file" "source-file $tmpdir/.config/tmux/solarized-dark.conf" "dark selection should source dark theme"
+  assert_contains "$log_file" "set-option -gq @active_theme_selection dark" "dark selection should update active theme state"
+}
+
+run_light_selection_updates_active_state() {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  local stub_dir="$tmpdir/stubs"
+  local log_file="$tmpdir/tmux.log"
+  mkdir -p "$stub_dir"
+
+  cat >"$stub_dir/osascript" <<'EOF'
+#!/usr/bin/env bash
+printf 'false\n'
+EOF
+
+  cat >"$stub_dir/tmux" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$TMUX_STUB_LOG"
+if [ "$1" = "show-option" ] && [ "$2" = "-gqv" ] && [ "$3" = "@active_theme_selection" ]; then
+  printf 'dark\n'
+fi
+EOF
+
+  chmod +x "$stub_dir/osascript" "$stub_dir/tmux"
+
+  PATH="$stub_dir:$PATH" TMUX_STUB_LOG="$log_file" HOME="$tmpdir" bash "$SCRIPT_PATH"
+
+  assert_contains "$log_file" "source-file $tmpdir/.config/tmux/solarized-light.conf" "light selection should source light theme"
+  assert_contains "$log_file" "set-option -gq @active_theme_selection light" "light selection should update active theme state"
+}
+
+run_unchanged_selection_is_noop() {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  local stub_dir="$tmpdir/stubs"
+  local log_file="$tmpdir/tmux.log"
+  mkdir -p "$stub_dir"
+
+  cat >"$stub_dir/osascript" <<'EOF'
+#!/usr/bin/env bash
+printf 'true\n'
+EOF
+
+  cat >"$stub_dir/tmux" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$TMUX_STUB_LOG"
+if [ "$1" = "show-option" ] && [ "$2" = "-gqv" ] && [ "$3" = "@active_theme_selection" ]; then
+  printf 'dark\n'
+fi
+EOF
+
+  chmod +x "$stub_dir/osascript" "$stub_dir/tmux"
+
+  PATH="$stub_dir:$PATH" TMUX_STUB_LOG="$log_file" HOME="$tmpdir" bash "$SCRIPT_PATH"
+
+  assert_not_contains "$log_file" "source-file" "unchanged selection should not source theme file"
+}
+
+run_forced_refresh_reapplies_selected_theme() {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  local stub_dir="$tmpdir/stubs"
+  local log_file="$tmpdir/tmux.log"
+  mkdir -p "$stub_dir"
+
+  cat >"$stub_dir/osascript" <<'EOF'
+#!/usr/bin/env bash
+printf 'true\n'
+EOF
+
+  cat >"$stub_dir/tmux" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$TMUX_STUB_LOG"
+if [ "$1" = "show-option" ] && [ "$2" = "-gqv" ] && [ "$3" = "@active_theme_selection" ]; then
+  printf 'dark\n'
+fi
+EOF
+
+  chmod +x "$stub_dir/osascript" "$stub_dir/tmux"
+
+  PATH="$stub_dir:$PATH" TMUX_STUB_LOG="$log_file" HOME="$tmpdir" TMUX_THEME_FORCE=1 bash "$SCRIPT_PATH"
+
+  assert_match_count "$log_file" "source-file $tmpdir/.config/tmux/solarized-dark.conf" "1" "forced refresh should source selected theme exactly once"
+}
+
+run_detection_failure_returns_nonzero_and_no_sourcefile() {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  local stub_dir="$tmpdir/stubs"
+  local log_file="$tmpdir/tmux.log"
+  local stderr_file="$tmpdir/theme-switcher.stderr"
+  mkdir -p "$stub_dir"
+  : >"$log_file"
+
+  cat >"$stub_dir/osascript" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+
+  cat >"$stub_dir/tmux" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$TMUX_STUB_LOG"
+EOF
+
+  chmod +x "$stub_dir/osascript" "$stub_dir/tmux"
+
+  local status=0
+  if PATH="$stub_dir:$PATH" TMUX_STUB_LOG="$log_file" HOME="$tmpdir" bash "$SCRIPT_PATH" 2>"$stderr_file"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  if [ "$status" -eq 0 ]; then
+    fail "detection failure should return non-zero"
+  fi
+
+  assert_contains "$stderr_file" "Failed to detect macOS appearance" "detection failure should emit expected stderr"
+  assert_not_contains "$log_file" "source-file" "detection failure should not source theme file"
+}
+
+run_tmux_conf_manual_refresh_uses_force_signal() {
+  assert_contains "$ROOT_DIR/tmux.conf" "TMUX_THEME_FORCE=1 ~/.config/tmux/theme-switcher.sh" "manual refresh binding should force reapply"
+}
+
+run_dark_selection_updates_active_state
+printf 'PASS dark selection updates active state\n'
+
+run_light_selection_updates_active_state
+printf 'PASS light selection updates active state\n'
+
+run_unchanged_selection_is_noop
+printf 'PASS unchanged selection is no-op\n'
+
+run_forced_refresh_reapplies_selected_theme
+printf 'PASS forced refresh reapplies selected theme\n'
+
+run_detection_failure_returns_nonzero_and_no_sourcefile
+printf 'PASS detection failure returns non-zero, emits expected stderr, and no source-file\n'
+
+run_tmux_conf_manual_refresh_uses_force_signal
+printf 'PASS tmux.conf manual refresh uses force signal\n'

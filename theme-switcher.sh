@@ -1,17 +1,30 @@
-#!/bin/bash
-# Theme switcher for tmux - detects macOS appearance and loads appropriate Solarized theme
+#!/usr/bin/env bash
 
-# Get the macOS appearance setting
-APPEARANCE=$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode')
+set -u
 
-# Path to theme files
 THEME_DIR="$HOME/.config/tmux"
 
-if [ "$APPEARANCE" = "true" ]; then
-    # Dark mode is enabled
-    tmux source-file "$THEME_DIR/solarized-dark.conf"
+appearance=$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode' 2>/dev/null) || {
+  printf 'Failed to detect macOS appearance\n' >&2
+  exit 1
+}
+
+if [ "$appearance" = "true" ]; then
+  selected_theme="dark"
+  selected_theme_file="$THEME_DIR/solarized-dark.conf"
+elif [ "$appearance" = "false" ]; then
+  selected_theme="light"
+  selected_theme_file="$THEME_DIR/solarized-light.conf"
 else
-    # Light mode is enabled
-    tmux source-file "$THEME_DIR/solarized-light.conf"
+  printf 'Unexpected macOS appearance value: %s\n' "$appearance" >&2
+  exit 1
 fi
 
+active_theme=$(tmux show-option -gqv @active_theme_selection)
+
+if [ "${TMUX_THEME_FORCE:-0}" != "1" ] && [ "$selected_theme" = "$active_theme" ]; then
+  exit 0
+fi
+
+tmux source-file "$selected_theme_file"
+tmux set-option -gq @active_theme_selection "$selected_theme"
