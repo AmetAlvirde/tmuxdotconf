@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -eu
+
+ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
+BASE_FILE="$ROOT_DIR/solarized-base.conf"
+DARK_FILE="$ROOT_DIR/solarized-dark.conf"
+LIGHT_FILE="$ROOT_DIR/solarized-light.conf"
+
+fail() {
+  printf 'FAIL %s\n' "$1" >&2
+  exit 1
+}
+
+assert_contains() {
+  local file="$1"
+  local expected="$2"
+  local message="$3"
+
+  if ! /usr/bin/grep -F "$expected" "$file" >/dev/null 2>&1; then
+    printf 'Expected to find: %s\n' "$expected" >&2
+    printf 'In file: %s\n' "$file" >&2
+    fail "$message"
+  fi
+}
+
+assert_not_contains() {
+  local file="$1"
+  local expected="$2"
+  local message="$3"
+
+  if /usr/bin/grep -F "$expected" "$file" >/dev/null 2>&1; then
+    printf 'Did not expect to find: %s\n' "$expected" >&2
+    printf 'In file: %s\n' "$file" >&2
+    fail "$message"
+  fi
+}
+
+assert_contains "$DARK_FILE" "source-file ~/.config/tmux/solarized-base.conf" "dark theme should source base layout"
+assert_contains "$LIGHT_FILE" "source-file ~/.config/tmux/solarized-base.conf" "light theme should source base layout"
+
+assert_not_contains "$DARK_FILE" "set -g status-style" "dark theme should not keep duplicated status style"
+assert_not_contains "$LIGHT_FILE" "set -g status-style" "light theme should not keep duplicated status style"
+assert_not_contains "$DARK_FILE" "set -g pane-border-style" "dark theme should not keep duplicated pane border style"
+assert_not_contains "$LIGHT_FILE" "set -g pane-border-style" "light theme should not keep duplicated pane border style"
+
+assert_contains "$BASE_FILE" "set -g status-style" "base file should own status style"
+assert_contains "$BASE_FILE" "set -g window-status-format" "base file should own window status format"
+assert_contains "$BASE_FILE" "set -g pane-border-style" "base file should own pane border style"
+assert_contains "$BASE_FILE" "set -g message-style" "base file should own message style"
+assert_contains "$BASE_FILE" "set -g mode-style" "base file should own mode style"
+assert_contains "$BASE_FILE" "set -g clock-mode-colour" "base file should own clock mode color"
+
+printf 'PASS base theme layout sourced and deduplicated\n'

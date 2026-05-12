@@ -45,8 +45,8 @@
 
 ## Flags
 
-- OPEN: Should the shared theme layout file be named `solarized-shared.conf`,
-  `theme-shared.conf`, `solarized-base.conf`, or another name?
+- RESOLVED IN SUB-ISSUE #10: The shared theme layout file is named
+  `solarized-base.conf`.
 - OPEN: Should `tmux.conf` configuration domains remain inline with clearer
   section headers, or should selected domains (bindings, options, theme hooks,
   plugins) become separately sourced files? Resolve through implementation.

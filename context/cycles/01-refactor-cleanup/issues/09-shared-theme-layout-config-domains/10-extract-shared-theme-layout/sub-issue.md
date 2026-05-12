@@ -64,9 +64,9 @@ resolve a separate domain-organization flag.
 
 ### Alternative A: Minimal sourced layout file
 
-Create `solarized-shared.conf` with the duplicated `set -g` layout commands.
+Create `solarized-base.conf` with the duplicated `set -g` layout commands.
 Each theme file assigns role variables to its current color values, then sources
-`solarized-shared.conf`.
+`solarized-base.conf`.
 
 - Leverage: High, because future layout changes happen in one file.
 - Locality: High, because theme-specific colors stay in theme files and shared
@@ -119,7 +119,7 @@ improves.
 
 - `solarized-dark.conf`
 - `solarized-light.conf`
-- New shared theme layout file, expected name: `solarized-shared.conf`
+- New shared theme layout file, expected name: `solarized-base.conf`
 - `scripts/check`, only if it must explicitly require or parse the shared layout
   file after implementation
 
