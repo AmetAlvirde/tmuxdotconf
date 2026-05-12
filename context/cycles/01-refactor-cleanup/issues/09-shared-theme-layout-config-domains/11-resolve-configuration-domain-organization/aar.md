@@ -1,0 +1,3 @@
+1. Did it go as planned? Yes -- `tmux.conf` now keeps domains inline with clear section markers while preserving behavior and passing the full verification harness.
+2. What changed from the sub-issue plan: Added a dedicated domain-organization behavior test (`scripts/test-tmux-conf-domains`) and wired it into `scripts/check` to keep the organization decision continuously verified.
+3. Carry-forward -- flags to write in the parent, divergence to note for future siblings, notes for the parent issue's AAR: Parent Issue #9 domain-organization and ADR-condition flags were resolved in `issue.md`; no new flags for future siblings.

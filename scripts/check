@@ -43,10 +43,14 @@ require_command bash || exit 1
 require_file tmux.conf || exit 1
 require_file solarized-dark.conf || exit 1
 require_file solarized-light.conf || exit 1
+require_file solarized-base.conf || exit 1
 require_file theme-switcher.sh || exit 1
 
 run_check "tmux parse tmux.conf" tmux source-file -n tmux.conf || exit $?
+run_check "tmux.conf domain organization" bash scripts/test-tmux-conf-domains || exit $?
 run_check "tmux parse solarized-dark.conf" tmux source-file -n solarized-dark.conf || exit $?
 run_check "tmux parse solarized-light.conf" tmux source-file -n solarized-light.conf || exit $?
+run_check "tmux parse solarized-base.conf" tmux source-file -n solarized-base.conf || exit $?
 run_check "shell parse theme-switcher.sh" bash -n theme-switcher.sh || exit $?
+run_check "base theme layout boundary" bash scripts/test-base-theme-layout || exit $?
 run_check "theme-switcher behavior" bash scripts/test-theme-switcher-behavior || exit $?
