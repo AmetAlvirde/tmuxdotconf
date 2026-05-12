@@ -1,0 +1,3 @@
+1. Did it go as planned? Yes -- implemented idempotent theme selection with a manual force refresh path and behavior tests through the script entrypoint.
+2. What changed from the sub-issue plan: Added a repository-local behavior test script and wired it into `scripts/check` so idempotence and failure handling are validated alongside parse checks.
+3. Carry-forward -- flags to write in the parent, divergence to note for future siblings, notes for the parent issue's AAR: Parent issue implementation flags were resolved in `issue.md` (`@active_theme_selection` option name and non-zero no-op on appearance detection failure); no additional carry-forward flags.
