@@ -47,6 +47,7 @@ require_file solarized-base.conf || exit 1
 require_file theme-switcher.sh || exit 1
 
 run_check "tmux parse tmux.conf" tmux source-file -n tmux.conf || exit $?
+run_check "tmux.conf domain organization" bash scripts/test-tmux-conf-domains || exit $?
 run_check "tmux parse solarized-dark.conf" tmux source-file -n solarized-dark.conf || exit $?
 run_check "tmux parse solarized-light.conf" tmux source-file -n solarized-light.conf || exit $?
 run_check "tmux parse solarized-base.conf" tmux source-file -n solarized-base.conf || exit $?

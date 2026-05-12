@@ -103,9 +103,8 @@ boundary.
 
 - RESOLVED IN ISSUE #1: The verification harness command surface is
   `scripts/check` (repository-local, run from workspace root).
-- RESOLVE THROUGH IMPLEMENTATION: Should configuration domains remain inline in
-  `tmux.conf` with clearer sectioning, or should selected domains become sourced
-  files?
+- RESOLVED IN ISSUE #9: Keep configuration domains inline in `tmux.conf` with
+  clearer sectioning; no selected domains became sourced files.
 - RESOLVED IN ISSUE #4: Record active theme selection with tmux option
   `@active_theme_selection`.
 - RESOLVED IN ISSUE #4: On appearance detection failure, preserve current theme

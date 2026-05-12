@@ -47,8 +47,8 @@
 
 - RESOLVED IN SUB-ISSUE #10: The shared theme layout file is named
   `solarized-base.conf`.
-- OPEN: Should `tmux.conf` configuration domains remain inline with clearer
-  section headers, or should selected domains (bindings, options, theme hooks,
-  plugins) become separately sourced files? Resolve through implementation.
-- OPEN: If any domain is extracted to a sourced file, should an ADR be created
-  to record the decision?
+- RESOLVED IN SUB-ISSUE #11: Keep configuration domains inline in `tmux.conf`
+  with clearer section headers; no domain extraction is needed at current
+  configuration size.
+- RESOLVED IN SUB-ISSUE #11: No ADR created because no configuration domain was
+  extracted to a sourced file.

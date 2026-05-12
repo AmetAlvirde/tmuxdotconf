@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+set -eu
+
+ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
+TMUX_CONF="$ROOT_DIR/tmux.conf"
+
+fail() {
+  printf 'FAIL %s\n' "$1" >&2
+  exit 1
+}
+
+assert_contains() {
+  local expected="$1"
+  local message="$2"
+
+  if ! /usr/bin/grep -F "$expected" "$TMUX_CONF" >/dev/null 2>&1; then
+    printf 'Expected to find: %s\n' "$expected" >&2
+    fail "$message"
+  fi
+}
+
+line_number_for() {
+  local marker="$1"
+  local line
+
+  line=$(/usr/bin/grep -n -m 1 -F "$marker" "$TMUX_CONF" | /usr/bin/cut -d: -f1)
+  if [ -z "$line" ]; then
+    printf 'Missing marker: %s\n' "$marker" >&2
+    fail "tmux.conf should contain expected domain marker"
+  fi
+
+  printf '%s\n' "$line"
+}
+
+assert_ordered() {
+  local previous=0
+  local marker
+
+  for marker in "$@"; do
+    local current
+    current=$(line_number_for "$marker")
+    if [ "$current" -le "$previous" ]; then
+      printf 'Marker order violation: %s\n' "$marker" >&2
+      fail "tmux.conf domain markers should be in logical order"
+    fi
+    previous="$current"
+  done
+}
+
+assert_ordered \
+  "# RELOAD & ENTRYPOINT" \
+  "# CORE OPTIONS" \
+  "# PANE & WINDOW BEHAVIOR" \
+  "# NAVIGATION & RESIZE BINDINGS" \
+  "# TERMINAL & EVENTS" \
+  "# THEME SWITCHER & HOOKS" \
+  "# COPY MODE" \
+  "# PLUGINS"
+
+assert_contains "run-shell \"~/.config/tmux/theme-switcher.sh\"" "tmux.conf should still invoke theme switcher"
+assert_contains "run '~/.config/tmux/plugins/tpm/tpm'" "tmux.conf should still initialize TPM"
+
+printf 'PASS tmux.conf domain markers are clear and ordered\n'
