@@ -1,0 +1,3 @@
+1. Did it go as planned? Yes -- extracted duplicated dark/light layout into `solarized-base.conf`, kept theme entrypoints stable, and preserved visual role assignments.
+2. What changed from the sub-issue plan: The shared file name was finalized as `solarized-base.conf` (instead of `solarized-shared.conf`), and the verification harness was deepened with `scripts/test-shared-theme-layout` plus explicit tmux parse of `solarized-base.conf`.
+3. Carry-forward -- flags to write in the parent, divergence to note for future siblings, notes for the parent issue's AAR: Parent flag for shared layout naming was resolved in `issue.md`; no new flags for future siblings.
