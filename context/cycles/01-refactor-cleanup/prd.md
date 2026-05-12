@@ -106,7 +106,7 @@ boundary.
 - RESOLVE THROUGH IMPLEMENTATION: Should configuration domains remain inline in
   `tmux.conf` with clearer sectioning, or should selected domains become sourced
   files?
-- RESOLVE THROUGH IMPLEMENTATION: What tmux option name should record the active
-  theme selection?
-- RESOLVE THROUGH IMPLEMENTATION: How should detection failure behave: preserve
-  the current theme, fall back to light, or show a tmux message?
+- RESOLVED IN ISSUE #4: Record active theme selection with tmux option
+  `@active_theme_selection`.
+- RESOLVED IN ISSUE #4: On appearance detection failure, preserve current theme
+  by returning non-zero and performing no `source-file` action.
