@@ -1,0 +1,3 @@
+1. Did it go as planned? Yes -- added a failed-apply behavior test through `theme-switcher.sh` and preserved active theme state by stopping before `tmux set-option` when `tmux source-file` fails.
+2. What changed from the sub-issue plan: No implementation scope change; the test was added to the existing behavior script and the fix stayed local to the apply-and-record sequence.
+3. Carry-forward -- flags to write in the parent, divergence to note for future siblings, notes for the parent issue's AAR: Issue #4 already had parent closure artifacts from the earlier merge, so this is a post-close hardening slice; parent AAR was not edited. No new flags for future siblings.

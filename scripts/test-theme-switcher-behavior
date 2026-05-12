@@ -203,6 +203,48 @@ EOF
   assert_not_contains "$log_file" "source-file" "detection failure should not source theme file"
 }
 
+run_failed_apply_returns_nonzero_and_preserves_active_state() {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  local stub_dir="$tmpdir/stubs"
+  local log_file="$tmpdir/tmux.log"
+  mkdir -p "$stub_dir"
+  : >"$log_file"
+
+  cat >"$stub_dir/osascript" <<'EOF'
+#!/usr/bin/env bash
+printf 'true\n'
+EOF
+
+  cat >"$stub_dir/tmux" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$TMUX_STUB_LOG"
+if [ "$1" = "show-option" ] && [ "$2" = "-gqv" ] && [ "$3" = "@active_theme_selection" ]; then
+  printf 'light\n'
+elif [ "$1" = "source-file" ]; then
+  exit 42
+fi
+EOF
+
+  chmod +x "$stub_dir/osascript" "$stub_dir/tmux"
+
+  local status=0
+  if PATH="$stub_dir:$PATH" TMUX_STUB_LOG="$log_file" HOME="$tmpdir" bash "$SCRIPT_PATH"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  if [ "$status" -eq 0 ]; then
+    fail "failed theme apply should return non-zero"
+  fi
+
+  assert_contains "$log_file" "source-file $tmpdir/.config/tmux/solarized-dark.conf" "failed theme apply should attempt selected theme"
+  assert_not_contains "$log_file" "set-option -gq @active_theme_selection" "failed theme apply should not update active theme state"
+}
+
 run_tmux_conf_manual_refresh_uses_force_signal() {
   assert_contains "$ROOT_DIR/tmux.conf" "TMUX_THEME_FORCE=1 ~/.config/tmux/theme-switcher.sh" "manual refresh binding should force reapply"
 }
@@ -221,6 +263,9 @@ printf 'PASS forced refresh reapplies selected theme\n'
 
 run_detection_failure_returns_nonzero_and_no_sourcefile
 printf 'PASS detection failure returns non-zero, emits expected stderr, and no source-file\n'
+
+run_failed_apply_returns_nonzero_and_preserves_active_state
+printf 'PASS failed apply returns non-zero and preserves active state\n'
 
 run_tmux_conf_manual_refresh_uses_force_signal
 printf 'PASS tmux.conf manual refresh uses force signal\n'
